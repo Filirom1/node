@@ -36,6 +36,7 @@ function getall() {
       var req = http.get({
         hostname: 'localhost',
         pathname: '/',
+        agent: false,
         port: PORT
       }, cb).on('error', onerror);
 
