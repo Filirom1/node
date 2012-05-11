@@ -12,6 +12,7 @@ var http  = require('http'),
     count   = 0,
     countGC = 0,
     todo    = 18,
+    gcCall = 0,
     common = require('../common.js'),
     assert = require('assert'),
     PORT = common.PORT;
@@ -52,25 +53,33 @@ function afterGC(){
 
 var timer;
 function statusLater() {
-  if(done % 4 === 0) gc();
-  if (todo - done < 10) {
-    console.log('Force GC');
-    gc();
-  }
   if (timer) clearTimeout(timer);
   timer = setTimeout(status, 1);
 }
 
 function status() {
-  if(done % 4 === 0) gc();
   console.log('Done: %d/%d', done, todo);
   console.log('Collected: %d/%d', countGC, count);
   if (done === todo) {
-    console.log('Done: %d/%d', done, todo);
-    console.log('Collected: %d/%d', countGC, count);
-    console.log('All should be collected now.');
-    assert(count === countGC);
-    process.exit(0);
+
+    var waitALittle = 0;
+    setInterval(function(){
+      gc();
+      waitALittle++;
+      console.log('Called gc() %d  times since last time',  gcCall);
+      gcCall = 0;
+      console.log('Done: %d/%d', done, todo);
+      console.log('Collected: %d/%d', countGC, count);
+      console.log('All should be collected now.');
+      if(waitALittle > 10 || count === countGC){
+        assert(count === countGC);
+        process.exit(0);
+      }
+    }, 1000);
   }
 }
 
+setInterval(function(){
+  gc();
+  gcCall++;
+}, 100);
